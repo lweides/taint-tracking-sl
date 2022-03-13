@@ -50,6 +50,7 @@ import com.oracle.truffle.api.dsl.TypeSystem;
 import com.oracle.truffle.sl.SLLanguage;
 import com.oracle.truffle.sl.runtime.SLBigNumber;
 import com.oracle.truffle.sl.runtime.SLNull;
+import com.oracle.truffle.sl.runtime.SLString;
 
 /**
  * The type system of SL, as explained in {@link SLLanguage}. Based on the {@link TypeSystem}
@@ -93,5 +94,12 @@ public abstract class SLTypes {
     @TruffleBoundary
     public static SLBigNumber castBigNumber(long value) {
         return new SLBigNumber(BigInteger.valueOf(value));
+    }
+
+    // TODO is this necessary
+    @ImplicitCast
+    @TruffleBoundary
+    public static SLString castString(String value) {
+        return new SLString(value);
     }
 }

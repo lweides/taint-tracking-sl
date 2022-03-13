@@ -8,9 +8,11 @@ graalvm/
 .factorypath
 .classpath
 .idea/
+.vscode
 .project
 /bin/
 /Coco.jar
 component/sl-component.jar
 language/dependency-reduced-pom.xml
 native/slnative
+graalvm-ce-java11-22.0.0.2

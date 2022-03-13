@@ -46,6 +46,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.sl.SLLanguage;
 import com.oracle.truffle.sl.runtime.SLContext;
+import com.oracle.truffle.sl.runtime.SLString;
 
 /**
  * Builtin function to define (or redefine) functions. The provided source code is parsed the same
@@ -54,16 +55,17 @@ import com.oracle.truffle.sl.runtime.SLContext;
 @NodeInfo(shortName = "defineFunction")
 public abstract class SLDefineFunctionBuiltin extends SLBuiltinNode {
 
+    // TODO SLString or String?
     @TruffleBoundary
     @Specialization
-    public String defineFunction(String code) {
+    public String defineFunction(SLString code) {
         // @formatter:off
-        Source source = Source.newBuilder(SLLanguage.ID, code, "[defineFunction]").
+        Source source = Source.newBuilder(SLLanguage.ID, code.string, "[defineFunction]").
             build();
         // @formatter:on
         /* The same parsing code as for parsing the initial source. */
         SLContext.get(this).getFunctionRegistry().register(source);
 
-        return code;
+        return code.string;
     }
 }

@@ -77,6 +77,7 @@ import com.oracle.truffle.sl.builtins.SLImportBuiltinFactory;
 import com.oracle.truffle.sl.builtins.SLIsExecutableBuiltinFactory;
 import com.oracle.truffle.sl.builtins.SLIsInstanceBuiltinFactory;
 import com.oracle.truffle.sl.builtins.SLIsNullBuiltinFactory;
+import com.oracle.truffle.sl.builtins.SLIsTaintedBuiltinFactory;
 import com.oracle.truffle.sl.builtins.SLJavaTypeBuiltinFactory;
 import com.oracle.truffle.sl.builtins.SLNanoTimeBuiltinFactory;
 import com.oracle.truffle.sl.builtins.SLNewObjectBuiltinFactory;
@@ -86,6 +87,7 @@ import com.oracle.truffle.sl.builtins.SLReadlnBuiltin;
 import com.oracle.truffle.sl.builtins.SLReadlnBuiltinFactory;
 import com.oracle.truffle.sl.builtins.SLRegisterShutdownHookBuiltinFactory;
 import com.oracle.truffle.sl.builtins.SLStackTraceBuiltinFactory;
+import com.oracle.truffle.sl.builtins.SLTaintBuiltinFactory;
 import com.oracle.truffle.sl.builtins.SLTypeOfBuiltinFactory;
 import com.oracle.truffle.sl.builtins.SLWrapPrimitiveBuiltinFactory;
 import org.graalvm.polyglot.Context;
@@ -187,6 +189,9 @@ public final class SLContext {
         installBuiltin(SLExitBuiltinFactory.getInstance());
         installBuiltin(SLRegisterShutdownHookBuiltinFactory.getInstance());
         installBuiltin(SLAddToHostClassPathBuiltinFactory.getInstance());
+        // my builtins
+        installBuiltin(SLTaintBuiltinFactory.getInstance());
+        installBuiltin(SLIsTaintedBuiltinFactory.getInstance());
     }
 
     public void installBuiltin(NodeFactory<? extends SLBuiltinNode> factory) {

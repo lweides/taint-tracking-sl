@@ -53,6 +53,7 @@ import com.oracle.truffle.sl.nodes.SLTypes;
 import com.oracle.truffle.sl.runtime.SLBigNumber;
 import com.oracle.truffle.sl.runtime.SLFunction;
 import com.oracle.truffle.sl.runtime.SLNull;
+import com.oracle.truffle.sl.runtime.SLString;
 
 /**
  * The node to normalize any value to an SL value. This is useful to reduce the number of values
@@ -65,7 +66,7 @@ public abstract class SLUnboxNode extends SLExpressionNode {
     static final int LIMIT = 5;
 
     @Specialization
-    protected static String fromString(String value) {
+    protected static SLString fromString(SLString value) {
         return value;
     }
 
@@ -102,7 +103,7 @@ public abstract class SLUnboxNode extends SLExpressionNode {
             } else if (interop.fitsInDouble(value)) {
                 return (long) interop.asDouble(value);
             } else if (interop.isString(value)) {
-                return interop.asString(value);
+                return new SLString(interop.asString(value));
             } else if (interop.isBoolean(value)) {
                 return interop.asBoolean(value);
             } else {

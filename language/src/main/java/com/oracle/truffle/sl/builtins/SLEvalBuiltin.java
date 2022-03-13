@@ -48,6 +48,7 @@ import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.sl.runtime.SLContext;
+import com.oracle.truffle.sl.runtime.SLString;
 
 /**
  * Builtin function to evaluate source code in any supported language.
@@ -63,26 +64,26 @@ public abstract class SLEvalBuiltin extends SLBuiltinNode {
     static final int LIMIT = 2;
 
     @Specialization(guards = {"stringsEqual(cachedId, id)", "stringsEqual(cachedCode, code)"}, limit = "LIMIT")
-    public Object evalCached(String id, String code,
-                    @Cached("id") String cachedId,
-                    @Cached("code") String cachedCode,
+    public Object evalCached(SLString id, SLString code,
+                    @Cached("id") SLString cachedId,
+                    @Cached("code") SLString cachedCode,
                     @Cached("create(parse(id, code))") DirectCallNode callNode) {
         return callNode.call(new Object[]{});
     }
 
     @TruffleBoundary
     @Specialization(replaces = "evalCached")
-    public Object evalUncached(String id, String code) {
+    public Object evalUncached(SLString id, SLString code) {
         return parse(id, code).call();
     }
 
-    protected CallTarget parse(String id, String code) {
-        final Source source = Source.newBuilder(id, code, "(eval)").build();
+    protected CallTarget parse(SLString id, SLString code) {
+        final Source source = Source.newBuilder(id.string, code.string, "(eval)").build();
         return SLContext.get(this).parse(source);
     }
 
     /* Work around findbugs warning in generate code. */
-    protected static boolean stringsEqual(String a, String b) {
+    protected static boolean stringsEqual(SLString a, SLString b) {
         return a.equals(b);
     }
 }

@@ -96,6 +96,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.sl.runtime.SLBigNumber;
 import com.oracle.truffle.sl.runtime.SLFunction;
+import com.oracle.truffle.sl.runtime.SLString;
 import com.oracle.truffle.tck.DebuggerTester;
 
 /**
@@ -225,11 +226,12 @@ public class SLInstrumentTest {
                 break;
             case 2:
                 checkRootNode(scopes, "test", node, frame);
-                checkVars(arguments, "n", "n_n");
+                // TODO is this change fine or should "n_n" be a java.lang.String?
+                checkVars(arguments, "n", new SLString("n_n"));
                 if (onEnter) {
-                    checkVars(scopes, "n", "n_n");
+                    checkVars(scopes, "n", new SLString("n_n"));
                 } else {
-                    checkVars(scopes, "n", "n_n", "a", 1L);
+                    checkVars(scopes, "n", new SLString("n_n"), "a", 1L);
                 }
                 assertFalse(getParentScopes(arguments));
                 assertFalse(getParentScopes(scopes));
@@ -237,56 +239,56 @@ public class SLInstrumentTest {
             case 3:
             case 7:
                 checkRootNode(scopes, "test", node, frame);
-                checkVars(arguments, "n", "n_n");
-                checkVars(scopes, "n", "n_n", "a", 1L);
+                checkVars(arguments, "n", new SLString("n_n"));
+                checkVars(scopes, "n", new SLString("n_n"), "a", 1L);
                 assertFalse(getParentScopes(arguments));
                 assertFalse(getParentScopes(scopes));
                 break;
             case 4:
             case 8:
                 checkBlock(scopes, node);
-                checkVars(arguments, "n", "n_n");
+                checkVars(arguments, "n", new SLString("n_n"));
                 long bVal = (line == 4) ? 10L : 20L;
                 if (onEnter) {
-                    checkVars(scopes, "n", "n_n", "a", 1L);
+                    checkVars(scopes, "n", new SLString("n_n"), "a", 1L);
                 } else {
-                    checkVars(scopes, "b", bVal, "n", "n_n", "a", 1L);
+                    checkVars(scopes, "b", bVal, "n", new SLString("n_n"), "a", 1L);
                 }
                 assertFalse(getParentScopes(arguments));
                 assertTrue(getParentScopes(scopes));
 
                 checkRootNode(scopes, "test", node, frame);
-                checkVars(scopes, "n", "n_n", "a", 1L);
+                checkVars(scopes, "n", new SLString("n_n"), "a", 1L);
                 assertFalse(getParentScopes(scopes));
                 break;
             case 5:
             case 9:
             case 10:
                 checkBlock(scopes, node);
-                checkVars(arguments, "n", "n_n");
+                checkVars(arguments, "n", new SLString("n_n"));
                 long aVal = (line == 10 || line == 9 && !onEnter) ? 0L : 1L;
                 bVal = (line == 5) ? 10L : 20L;
                 if (onEnter || line != 10) {
-                    checkVars(scopes, "b", bVal, "n", "n_n", "a", aVal);
+                    checkVars(scopes, "b", bVal, "n", new SLString("n_n"), "a", aVal);
                 } else {
-                    checkVars(scopes, "b", bVal, "c", 1L, "n", "n_n", "a", aVal);
+                    checkVars(scopes, "b", bVal, "c", 1L, "n", new SLString("n_n"), "a", aVal);
                 }
                 assertFalse(getParentScopes(arguments));
                 assertTrue(getParentScopes(scopes));
 
                 checkRootNode(scopes, "test", node, frame);
-                checkVars(scopes, "n", "n_n", "a", aVal);
+                checkVars(scopes, "n", new SLString("n_n"), "a", aVal);
                 assertFalse(getParentScopes(scopes));
                 break;
             case 11:
                 checkBlock(scopes, node);
-                checkVars(arguments, "n", "n_n");
-                checkVars(scopes, "b", 20L, "c", 1L, "n", "n_n", "a", 0L);
+                checkVars(arguments, "n", new SLString("n_n"));
+                checkVars(scopes, "b", 20L, "c", 1L, "n", new SLString("n_n"), "a", 0L);
                 assertFalse(getParentScopes(arguments));
                 assertTrue(getParentScopes(scopes));
 
                 checkRootNode(scopes, "test", node, frame);
-                checkVars(scopes, "n", "n_n", "a", 0L);
+                checkVars(scopes, "n", new SLString("n_n"), "a", 0L);
                 assertFalse(getParentScopes(scopes));
                 break;
             case 12:
@@ -294,65 +296,65 @@ public class SLInstrumentTest {
             case 14:
             case 15:
                 checkBlock(scopes, node);
-                checkVars(arguments, "n", "n_n");
+                checkVars(arguments, "n", new SLString("n_n"));
                 aVal = (line == 12 && onEnter) ? 0L : 4L;
                 bVal = (line < 13 || line == 13 && onEnter) ? 20L : 5L;
                 long cVal = (line < 14 || line == 14 && onEnter) ? 1L : 6L;
                 if (onEnter || line != 15) {
-                    checkVars(scopes, "b", bVal, "c", cVal, "n", "n_n", "a", aVal);
+                    checkVars(scopes, "b", bVal, "c", cVal, "n", new SLString("n_n"), "a", aVal);
                 } else {
-                    checkVars(scopes, "d", 7L, "b", bVal, "c", cVal, "n", "n_n", "a", aVal);
+                    checkVars(scopes, "d", 7L, "b", bVal, "c", cVal, "n", new SLString("n_n"), "a", aVal);
                 }
                 assertFalse(getParentScopes(arguments));
                 assertTrue(getParentScopes(scopes));
 
                 checkBlock(scopes, node);
-                checkVars(scopes, "b", bVal, "c", cVal, "n", "n_n", "a", aVal);
+                checkVars(scopes, "b", bVal, "c", cVal, "n", new SLString("n_n"), "a", aVal);
                 assertTrue(getParentScopes(scopes));
 
                 checkRootNode(scopes, "test", node, frame);
-                checkVars(scopes, "n", "n_n", "a", aVal);
+                checkVars(scopes, "n", new SLString("n_n"), "a", aVal);
                 assertFalse(getParentScopes(scopes));
                 break;
             case 16:
                 checkBlock(scopes, node);
-                checkVars(arguments, "n", "n_n");
-                checkVars(scopes, "d", 7L, "b", 5L, "c", 6L, "n", "n_n", "a", 4L);
+                checkVars(arguments, "n", new SLString("n_n"));
+                checkVars(scopes, "d", 7L, "b", 5L, "c", 6L, "n", new SLString("n_n"), "a", 4L);
                 assertFalse(getParentScopes(arguments));
                 assertTrue(getParentScopes(scopes));
 
                 checkBlock(scopes, node);
-                checkVars(scopes, "b", 5L, "c", 6L, "n", "n_n", "a", 4L);
+                checkVars(scopes, "b", 5L, "c", 6L, "n", new SLString("n_n"), "a", 4L);
                 assertTrue(getParentScopes(scopes));
 
                 checkRootNode(scopes, "test", node, frame);
-                checkVars(scopes, "n", "n_n", "a", 4L);
+                checkVars(scopes, "n", new SLString("n_n"), "a", 4L);
                 assertFalse(getParentScopes(scopes));
                 break;
             case 18:
                 checkBlock(scopes, node);
-                checkVars(arguments, "n", "n_n");
+                checkVars(arguments, "n", new SLString("n_n"));
                 if (onEnter) {
-                    checkVars(scopes, "b", 5L, "c", 6L, "n", "n_n", "a", 4L);
+                    checkVars(scopes, "b", 5L, "c", 6L, "n", new SLString("n_n"), "a", 4L);
                 } else {
-                    checkVars(scopes, "b", 5L, "c", 6L, "e", 30L, "n", "n_n", "a", 4L);
+                    checkVars(scopes, "b", 5L, "c", 6L, "e", 30L, "n", new SLString("n_n"), "a", 4L);
                 }
                 assertFalse(getParentScopes(arguments));
                 assertTrue(getParentScopes(scopes));
 
                 checkRootNode(scopes, "test", node, frame);
-                checkVars(scopes, "n", "n_n", "a", 4L);
+                checkVars(scopes, "n", new SLString("n_n"), "a", 4L);
                 assertFalse(getParentScopes(scopes));
                 break;
             case 20:
             case 21:
             case 22:
                 checkRootNode(scopes, "test", node, frame);
-                checkVars(arguments, "n", "n_n");
+                checkVars(arguments, "n", new SLString("n_n"));
                 if (line == 20 && onEnter) {
-                    checkVars(scopes, "n", "n_n", "a", 4L);
+                    checkVars(scopes, "n", new SLString("n_n"), "a", 4L);
                 } else {
-                    checkVars(scopes, "n", "n_n", "a", 4L, "f", 40L);
+                    checkVars(scopes, "n", new SLString("n_n"), "a", 4L, "f", 40L);
                 }
                 assertFalse(getParentScopes(arguments));
                 assertFalse(getParentScopes(scopes));

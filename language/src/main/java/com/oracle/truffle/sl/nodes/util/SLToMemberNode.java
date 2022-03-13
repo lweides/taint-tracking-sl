@@ -53,6 +53,7 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.sl.nodes.SLTypes;
 import com.oracle.truffle.sl.runtime.SLBigNumber;
+import com.oracle.truffle.sl.runtime.SLString;
 
 /**
  * The node to normalize any value to an SL value. This is useful to reduce the number of values
@@ -67,8 +68,8 @@ public abstract class SLToMemberNode extends Node {
     public abstract String execute(Object value) throws UnknownIdentifierException;
 
     @Specialization
-    protected static String fromString(String value) {
-        return value;
+    protected static String fromString(SLString value) {
+        return value.string;
     }
 
     @Specialization

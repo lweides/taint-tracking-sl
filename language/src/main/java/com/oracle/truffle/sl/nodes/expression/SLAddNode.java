@@ -49,6 +49,7 @@ import com.oracle.truffle.sl.SLException;
 import com.oracle.truffle.sl.nodes.SLBinaryNode;
 import com.oracle.truffle.sl.nodes.SLTypes;
 import com.oracle.truffle.sl.runtime.SLBigNumber;
+import com.oracle.truffle.sl.runtime.SLString;
 
 /**
  * SL node that performs the "+" operation, which performs addition on arbitrary precision numbers,
@@ -101,26 +102,22 @@ public abstract class SLAddNode extends SLBinaryNode {
         return new SLBigNumber(left.getValue().add(right.getValue()));
     }
 
-    /**
-     * Specialization for String concatenation. The SL specification says that String concatenation
-     * works if either the left or the right operand is a String. The non-string operand is
-     * converted then automatically converted to a String.
-     * <p>
-     * To implement these semantics, we tell the Truffle DSL to use a custom guard. The guard
-     * function is defined in {@link #isString this class}, but could also be in any superclass.
-     */
-    @Specialization(guards = "isString(left, right)")
+    @Specialization
     @TruffleBoundary
-    protected String add(Object left, Object right) {
-        return left.toString() + right.toString();
+    protected SLString add(SLString left, SLString right) {
+        return left.append(right);
     }
 
-    /**
-     * Guard for String concatenation: returns true if either the left or the right operand is a
-     * {@link String}.
-     */
-    protected boolean isString(Object a, Object b) {
-        return a instanceof String || b instanceof String;
+    @Specialization
+    @TruffleBoundary
+    protected SLString add(Object left, SLString right) {
+        return right.prepend(left.toString());
+    }
+
+    @Specialization
+    @TruffleBoundary
+    protected SLString add(SLString left, Object right) {
+        return left.append(right.toString());
     }
 
     @Fallback
