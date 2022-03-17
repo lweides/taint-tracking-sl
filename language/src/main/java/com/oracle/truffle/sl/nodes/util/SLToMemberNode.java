@@ -69,7 +69,7 @@ public abstract class SLToMemberNode extends Node {
 
     @Specialization
     protected static String fromString(SLString value) {
-        return value.string;
+        return value.toString();
     }
 
     @Specialization

@@ -66,6 +66,11 @@ public abstract class SLUnboxNode extends SLExpressionNode {
     static final int LIMIT = 5;
 
     @Specialization
+    protected static String fromString(String value) {
+        return value.toString();
+    }
+
+    @Specialization
     protected static SLString fromString(SLString value) {
         return value;
     }
@@ -103,7 +108,7 @@ public abstract class SLUnboxNode extends SLExpressionNode {
             } else if (interop.fitsInDouble(value)) {
                 return (long) interop.asDouble(value);
             } else if (interop.isString(value)) {
-                return new SLString(interop.asString(value));
+                return interop.asString(value);
             } else if (interop.isBoolean(value)) {
                 return interop.asBoolean(value);
             } else {

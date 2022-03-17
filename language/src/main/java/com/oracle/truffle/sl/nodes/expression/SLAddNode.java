@@ -41,6 +41,7 @@
 package com.oracle.truffle.sl.nodes.expression;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImplicitCast;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -48,6 +49,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.sl.SLException;
 import com.oracle.truffle.sl.nodes.SLBinaryNode;
 import com.oracle.truffle.sl.nodes.SLTypes;
+import com.oracle.truffle.sl.nodes.util.SLToSLStringNode;
 import com.oracle.truffle.sl.runtime.SLBigNumber;
 import com.oracle.truffle.sl.runtime.SLString;
 
@@ -102,22 +104,40 @@ public abstract class SLAddNode extends SLBinaryNode {
         return new SLBigNumber(left.getValue().add(right.getValue()));
     }
 
-    @Specialization
-    @TruffleBoundary
-    protected SLString add(SLString left, SLString right) {
-        return left.append(right);
+    /**
+     * Specialization for concatentation of {@link Object}s, where at least one of them is taint tracked
+     * (e.g. an  instance of {@link SLString}). The taint of the tainted {@link SLString}s is then propagated
+     * upon the resulting {@link SLString}.
+     * <p>
+     * Some overhead occurs when concatenating a {@link SLString} and some other {@link Object}, which is 
+     * not yet taint tracked, as the {@link Object} is first evaluated in to an {@link SLString} and then
+     * concatenated. Both operations allocate a new {@code Object[]}, the first of which is simply empty.
+     */
+    @Specialization(guards = "isSLString(left) || isSLString(right)")
+    protected SLString addTainted(Object left, Object right,
+                        @Cached SLToSLStringNode nodeLeft,
+                        @Cached SLToSLStringNode nodeRight) {
+        SLString l = nodeLeft.execute(left);
+        SLString r = nodeRight.execute(right);
+        return l.append(r);
     }
 
-    @Specialization
-    @TruffleBoundary
-    protected SLString add(Object left, SLString right) {
-        return right.prepend(left.toString());
+    /**
+     * The normal {@link String} concatenation.
+     * It is important than so {@link SLString}s are concatenated this way, as this would drop their taint 
+     * information.
+     */
+    @Specialization(guards = { "isString(left) || isString(right)", "!isSLString(left)", "!isSLString(right)" })
+    protected String addUnTainted(Object left, Object right) {
+        return left.toString() + right.toString();
     }
 
-    @Specialization
-    @TruffleBoundary
-    protected SLString add(SLString left, Object right) {
-        return left.append(right.toString());
+    protected boolean isString(Object value) {
+        return value instanceof String;
+    }
+
+    protected boolean isSLString(Object value) {
+        return value instanceof SLString;
     }
 
     @Fallback

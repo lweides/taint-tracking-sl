@@ -81,7 +81,6 @@ public final class SLType implements TruffleObject {
      */
     public static final SLType NUMBER = new SLType("Number", (l, v) -> l.fitsInLong(v) || v instanceof SLBigNumber);
     public static final SLType NULL = new SLType("NULL", (l, v) -> l.isNull(v));
-    // TODO is this fine?
     public static final SLType STRING = new SLType("String", (l, v) -> l.isString(v) || v instanceof SLString);
     public static final SLType BOOLEAN = new SLType("Boolean", (l, v) -> l.isBoolean(v));
     public static final SLType OBJECT = new SLType("Object", (l, v) -> l.hasMembers(v));

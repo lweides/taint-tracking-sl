@@ -43,7 +43,6 @@ package com.oracle.truffle.sl.nodes.expression;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.sl.nodes.SLExpressionNode;
-import com.oracle.truffle.sl.runtime.SLString;
 
 /**
  * Constant literal for a String value.
@@ -58,7 +57,7 @@ public final class SLStringLiteralNode extends SLExpressionNode {
     }
 
     @Override
-    public SLString executeGeneric(VirtualFrame frame) {
-        return new SLString(value);
+    public String executeGeneric(VirtualFrame frame) {
+        return value;
     }
 }

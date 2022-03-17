@@ -460,7 +460,7 @@ public class SLNodeFactory {
             return null;
         }
 
-        String name = ((SLStringLiteralNode) nameNode).executeGeneric(null).string;
+        String name = ((SLStringLiteralNode) nameNode).executeGeneric(null);
 
         Integer frameSlot = lexicalScope.find(name);
         boolean newVariable = false;
@@ -501,7 +501,7 @@ public class SLNodeFactory {
             return null;
         }
 
-        String name = ((SLStringLiteralNode) nameNode).executeGeneric(null).string;
+        String name = ((SLStringLiteralNode) nameNode).executeGeneric(null);
         final SLExpressionNode result;
         final Integer frameSlot = lexicalScope.find(name);
         if (frameSlot != null) {

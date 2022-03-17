@@ -41,10 +41,12 @@
 package com.oracle.truffle.sl.builtins;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.sl.SLLanguage;
+import com.oracle.truffle.sl.nodes.util.SLFromSLStringNode;
 import com.oracle.truffle.sl.runtime.SLContext;
 import com.oracle.truffle.sl.runtime.SLString;
 
@@ -55,17 +57,24 @@ import com.oracle.truffle.sl.runtime.SLString;
 @NodeInfo(shortName = "defineFunction")
 public abstract class SLDefineFunctionBuiltin extends SLBuiltinNode {
 
-    // TODO SLString or String?
     @TruffleBoundary
-    @Specialization
-    public String defineFunction(SLString code) {
+    @Specialization(guards = "isString(code)")
+    public String defineFunction(
+        Object code,
+        @Cached SLFromSLStringNode node
+        ) {
         // @formatter:off
-        Source source = Source.newBuilder(SLLanguage.ID, code.string, "[defineFunction]").
+        String codeString = node.execute(code);
+        Source source = Source.newBuilder(SLLanguage.ID, codeString, "[defineFunction]").
             build();
         // @formatter:on
         /* The same parsing code as for parsing the initial source. */
         SLContext.get(this).getFunctionRegistry().register(source);
 
-        return code.string;
+        return codeString;
+    }
+
+    protected boolean isString(Object value) {
+        return value instanceof String || value instanceof SLString;
     }
 }
