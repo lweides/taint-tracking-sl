@@ -40,7 +40,6 @@
  */
 package com.oracle.truffle.sl.builtins;
 
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -48,10 +47,9 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.sl.SLException;
-import com.oracle.truffle.sl.nodes.util.SLFromSLStringNode;
 import com.oracle.truffle.sl.runtime.SLContext;
 import com.oracle.truffle.sl.runtime.SLNull;
-import com.oracle.truffle.sl.runtime.SLString;
+import com.oracle.truffle.sl.runtime.SLStringLibrary;
 
 /**
  * Built-in function that goes through to import a symbol from the polyglot bindings.
@@ -59,20 +57,16 @@ import com.oracle.truffle.sl.runtime.SLString;
 @NodeInfo(shortName = "import")
 public abstract class SLImportBuiltin extends SLBuiltinNode {
 
-    @Specialization(guards = "isString(symbol)")
+    @Specialization(guards = "symbolLib.isStringLike(symbol)")
     public Object importSymbol(Object symbol,
                     @CachedLibrary(limit = "3") InteropLibrary arrays,
-                    @Cached SLFromSLStringNode node) {
+                    @CachedLibrary(limit = "3") SLStringLibrary symbolLib) {
         try {
-            return arrays.readMember(SLContext.get(this).getPolyglotBindings(), node.execute(symbol));
+            return arrays.readMember(SLContext.get(this).getPolyglotBindings(), symbolLib.asString(symbol));
         } catch (UnsupportedMessageException | UnknownIdentifierException e) {
             return SLNull.SINGLETON;
         } catch (SecurityException e) {
             throw new SLException("No polyglot access allowed.", this);
         }
-    }
-
-    protected boolean isString(Object value) {
-        return value instanceof String || value instanceof SLString;
     }
 }

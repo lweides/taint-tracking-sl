@@ -44,12 +44,14 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.sl.nodes.util.SLFromSLStringNode;
 import com.oracle.truffle.sl.runtime.SLContext;
 import com.oracle.truffle.sl.runtime.SLString;
+import com.oracle.truffle.sl.runtime.SLStringLibrary;
 
 /**
  * Builtin function to evaluate source code in any supported language.
@@ -64,22 +66,23 @@ public abstract class SLEvalBuiltin extends SLBuiltinNode {
 
     static final int LIMIT = 2;
 
-    @Specialization(guards = { "isString(id)", "isString(code)", "objectsEqual(cachedId, id)", "objectsEqual(cachedCode, code)" }, limit = "LIMIT")
+    @Specialization(guards = { "idLib.isStringLike(id)", "codeLib.isStringLike(code)", "stringsEqual(cachedId, idLib.asString(id))", "stringsEqual(cachedCode, codeLib.asString(code))" }, limit = "LIMIT")
     public Object evalCached(Object id, Object code,
-                    @Cached("id") Object cachedId,
-                    @Cached("code") Object cachedCode,
-                    @Cached SLFromSLStringNode idNode,
-                    @Cached SLFromSLStringNode codeNode,
-                    @Cached("create(parse(idNode.execute(id), codeNode.execute(code)))") DirectCallNode callNode) {
+                    @CachedLibrary(limit = "3") SLStringLibrary idLib,
+                    @CachedLibrary(limit = "3") SLStringLibrary codeLib,
+                    @Cached("idLib.asString(id)") String cachedId,
+                    @Cached("codeLib.asString(code)") String cachedCode,
+                    @Cached("create(parse(idLib.asString(id), codeLib.asString(code)))") DirectCallNode callNode) {
         return callNode.call(new Object[]{});
     }
 
     @TruffleBoundary
-    @Specialization(replaces = "evalCached", guards = { "isString(id)", "isString(code)" })
+    @Specialization(replaces = "evalCached", guards = { "idLib.isStringLike(id)", "codeLib.isStringLike(code)" })
     public Object evalUncached(Object id, Object code,
-                    @Cached SLFromSLStringNode idNode,
-                    @Cached SLFromSLStringNode codeNode) {
-        return parse(idNode.execute(id), codeNode.execute(code)).call();
+                    @CachedLibrary(limit = "3") SLStringLibrary idLib,
+                    @CachedLibrary(limit = "3") SLStringLibrary codeLib) {
+
+        return parse(idLib.asString(id), codeLib.asString(code)).call();
     }
 
     protected CallTarget parse(String id, String code) {
@@ -88,11 +91,7 @@ public abstract class SLEvalBuiltin extends SLBuiltinNode {
     }
 
     /* Work around findbugs warning in generate code. */
-    protected static boolean objectsEqual(Object a, Object b) {
+    protected static boolean stringsEqual(String a, String b) {
         return a.equals(b);
-    }
-
-    protected boolean isString(Object value) {
-        return value instanceof String || value instanceof SLString;
     }
 }

@@ -1,11 +1,10 @@
 package com.oracle.truffle.sl.builtins.taint;
 
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.sl.builtins.SLBuiltinNode;
-import com.oracle.truffle.sl.nodes.util.SLToSLStringNode;
-import com.oracle.truffle.sl.runtime.SLString;
+import com.oracle.truffle.sl.runtime.SLStringLibrary;
 
 @NodeInfo(shortName = "isTainted")
 public abstract class SLIsTaintedBuiltin extends SLBuiltinNode {
@@ -16,12 +15,9 @@ public abstract class SLIsTaintedBuiltin extends SLBuiltinNode {
    * @param value to be checked
    * @return {@code true} if the argument is tainted
    */
-  @Specialization(guards = "isString(value)")
-  public boolean isTainted(Object value, @Cached SLToSLStringNode node) {
-    return node.execute(value).isTainted();
-  }
-
-  protected boolean isString(Object value) {
-    return value instanceof String || value instanceof SLString;
+  @Specialization(guards = "valueLib.canBeTainted(value)")
+  public boolean isTainted(Object value,
+                  @CachedLibrary(limit = "3") SLStringLibrary valueLib) {
+    return valueLib.isTainted(value);
   }
 }

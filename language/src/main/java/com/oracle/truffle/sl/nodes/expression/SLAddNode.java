@@ -41,17 +41,17 @@
 package com.oracle.truffle.sl.nodes.expression;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImplicitCast;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.sl.SLException;
 import com.oracle.truffle.sl.nodes.SLBinaryNode;
 import com.oracle.truffle.sl.nodes.SLTypes;
-import com.oracle.truffle.sl.nodes.util.SLToSLStringNode;
 import com.oracle.truffle.sl.runtime.SLBigNumber;
 import com.oracle.truffle.sl.runtime.SLString;
+import com.oracle.truffle.sl.runtime.SLStringLibrary;
 
 /**
  * SL node that performs the "+" operation, which performs addition on arbitrary precision numbers,
@@ -106,38 +106,35 @@ public abstract class SLAddNode extends SLBinaryNode {
 
     /**
      * Specialization for concatentation of {@link Object}s, where at least one of them is taint tracked
-     * (e.g. an  instance of {@link SLString}). The taint of the tainted {@link SLString}s is then propagated
+     * (i.e. an  instance of {@link SLString}). The taint of the tainted {@link SLString}s is then propagated
      * upon the resulting {@link SLString}.
-     * <p>
-     * Some overhead occurs when concatenating a {@link SLString} and some other {@link Object}, which is 
-     * not yet taint tracked, as the {@link Object} is first evaluated in to an {@link SLString} and then
-     * concatenated. Both operations allocate a new {@code Object[]}, the first of which is simply empty.
      */
-    @Specialization(guards = "isSLString(left) || isSLString(right)")
+    @Specialization(guards = "leftLib.isTainted(left) || rightLib.isTainted(right)")
     protected SLString addTainted(Object left, Object right,
-                        @Cached SLToSLStringNode nodeLeft,
-                        @Cached SLToSLStringNode nodeRight) {
-        SLString l = nodeLeft.execute(left);
-        SLString r = nodeRight.execute(right);
-        return l.append(r);
+                        @CachedLibrary(limit = "3") SLStringLibrary leftLib,
+                        @CachedLibrary(limit = "3") SLStringLibrary rightLib) {
+        
+        String stringLeft = leftLib.asString(left);
+        String stringRight = rightLib.asString(right);
+        Object[] taintLeft = leftLib.getTaint(left);
+        Object[] taintRight = rightLib.getTaint(right);
+        return SLString.concatenate(stringLeft, stringRight, taintLeft, taintRight);
     }
 
     /**
      * The normal {@link String} concatenation.
-     * It is important than so {@link SLString}s are concatenated this way, as this would drop their taint 
+     * It is important that {@link SLString}s are not concatenated this way, as this would drop their taint 
      * information.
      */
-    @Specialization(guards = { "isString(left) || isString(right)", "!isSLString(left)", "!isSLString(right)" })
-    protected String addUnTainted(Object left, Object right) {
-        return left.toString() + right.toString();
-    }
-
-    protected boolean isString(Object value) {
-        return value instanceof String;
-    }
-
-    protected boolean isSLString(Object value) {
-        return value instanceof SLString;
+    @Specialization(guards = { 
+        "leftLib.isStringLike(left) || rightLib.isStringLike(right)", 
+        "!leftLib.isTainted(left)", 
+        "!rightLib.isTainted(right)"
+    })
+    protected String addUnTainted(Object left, Object right,
+                        @CachedLibrary(limit = "3") SLStringLibrary leftLib,
+                        @CachedLibrary(limit = "3") SLStringLibrary rightLib) {
+        return leftLib.asString(left) + rightLib.asString(right);
     }
 
     @Fallback

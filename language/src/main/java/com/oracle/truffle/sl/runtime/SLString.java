@@ -2,16 +2,19 @@ package com.oracle.truffle.sl.runtime;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.sl.nodes.SLTypes;
 
 /**
  * This class is used to propagate taint in {@link String}s in Simple Language.
- * Calls to {@link SLTaintBuiltin} return a {@link SLString} instead of {@link String.
+ * Calls to {@link SLAddTaintBuiltin} return a {@link SLString} instead of {@link String}.
  * {@link SLString}s pack a certain runtime overhead, as the taint information has to be propagated
  * using array copies, which are somewhat expensive.
  * <p>
@@ -19,10 +22,40 @@ import com.oracle.truffle.sl.nodes.SLTypes;
  * The Taint is shared between every slot of {@link SLString#taint}.
  * <p>
  * Every {@code value != SLNull.SINGLETON} inside {@link SLString#taint} is considered to be a valid Taint marker.
- * For example, the {@link SLString} {@code new SLString("foo", false)} is considered to be tainted.
+ * For example, tainting with {@code false} is still considered to be tainted.
  */
 @ExportLibrary(InteropLibrary.class)
+@ExportLibrary(value = SLStringLibrary.class, priority = 1)
+@SuppressWarnings("static-method")
 public final class SLString implements TruffleObject {
+
+  /**
+   * Concatenates 2 stringlike Objects, propagating their taint.
+   * @param left left side of the concatenation
+   * @param right right side of the concatenation
+   * @param taintLeft taint of the left side
+   * @param taintRight taint of the right side
+   * @return resulting {@link SLString}
+   */
+  @TruffleBoundary
+  public static SLString concatenate(String left, String right, Object[] taintLeft, Object[] taintRight) {
+    String value = left + right;
+    Object[] taint = new Object[left.length() + right.length()];
+    
+    if (taintLeft != null) {
+      System.arraycopy(taintLeft, 0, taint, 0, left.length());
+    } else {
+      Arrays.fill(taint, 0, left.length(), SLNull.SINGLETON);
+    }
+
+    if (taintRight != null) {
+      System.arraycopy(taintRight, 0, taint, left.length(), right.length());
+    } else {
+      Arrays.fill(taint, left.length(), left.length() + right.length(), SLNull.SINGLETON);
+    }
+
+    return new SLString(value, taint);
+  }
 
   /**
    * The underlying {@link String} value.
@@ -32,15 +65,16 @@ public final class SLString implements TruffleObject {
   /**
    * The taint of the {@link String}.
    */
+  @CompilationFinal(dimensions = 1)
   private final Object[] taint;
 
   /**
-   * Creates a new taint tracking {@link String} with only {@link Boolean}s to indicate
-   * whether a {@link char} is tainted or not.
+   * Creates a new taint tracking {@link String} with no taint.
    * @param value to be taint tracked
    */
   public SLString(String value) {
-    this(value, SLNull.SINGLETON);
+    this(value, new Object[value.length()]);
+    Arrays.fill(this.taint, SLNull.SINGLETON);
   }
 
   /**
@@ -49,88 +83,65 @@ public final class SLString implements TruffleObject {
    * @param value to be taint tracked
    * @param taint the taint
    */
-  public SLString(String value, Object taint) {
+  private SLString(String value, Object[] taint) {
     this.value = value;
-    this.taint = new Object[value.length()];
-    Arrays.fill(this.taint, taint);
+    this.taint = taint;
   }
 
-  /**
-   * @return whether the instance is tainted
-   */
-  public boolean isTainted() {
+  // message exports for SLStringLibrary
+
+  @ExportMessage()
+  String asString() {
+    return value;
+  }
+
+  @ExportMessage
+  static boolean isStringLike(SLString receiver) {
+    return true;
+  }
+
+  @ExportMessage
+  static boolean canBeTainted(SLString receiver) {
+    return true;
+  }
+
+  @ExportMessage
+  boolean isTainted() {
     for (Object taint : this.taint) {
       if (!SLTypes.isSLNull(taint)) { return true; }
     }
     return false;
   }
 
-  /**
-   * Gets the taint of a specific char.
-   * <p>
-   * We only support retriving taint on per char basis, as Simple Language
-   * does not support arrays.
-   * @param index index of the char from which the taint should be retrieved
-   * @return the whole taint of the instance
-   */
-  public Object getTaint(int index) {
-    return taint[index];
+  @ExportMessage
+  Object[] getTaint() {
+    return taint;
   }
-
-  /**
-   * Removes all the taint of the instance.
-   */
-  public void removeTaint() {
-    removeTaint(0, taint.length);
-  }
-
-  /**
-   * Removes the taint within {@code to} - {@code from}.
-   * @param from first taint to be removed
-   * @param to first taint to not be removed
-   */
+  
+  @ExportMessage
   @TruffleBoundary
-  public void removeTaint(int from, int to) {
-    Arrays.fill(taint, from, to, SLNull.SINGLETON);
+  Object[] removeTaint(SLBigNumber from, SLBigNumber to,
+            @CachedLibrary(limit = "3") InteropLibrary fromLib,
+            @CachedLibrary(limit = "3") InteropLibrary toLib) throws UnsupportedMessageException {
+    int f = fromLib.asInt(from);
+    int t = toLib.asInt(to);
+    Object[] prevTaint = Arrays.copyOfRange(taint, f, t);
+    Arrays.fill(taint, f, t, SLNull.SINGLETON);
+    return prevTaint;
   }
 
-  /**
-   * Adds taint to all chars of this instance.
-   * @param taint to be propagated
-   */
-  public void addTaint(Object taint) {
-    addTaint(taint, 0, this.taint.length);
-  }
-
-  /**
-   * Adds taint to this instance in the given range.
-   * @param taint to be propagated
-   * @param from first char to be tainted
-   * @param to first char not to be tainted
-   */
-  public void addTaint(Object taint, int from, int to) {
-    Arrays.fill(this.taint, from, to, taint);
-  }
-
-  /**
-   * Appends one {@link SLString} to another one.
-   * By doing so, it propagates the taint.
-   * @param post to be appended
-   * @return the concatenated {@link SLString}
-   */
+  @ExportMessage
   @TruffleBoundary
-  public SLString append(SLString post) {
-    return append(post.value, post.taint);
+  SLString addTaint(Object taint) {
+    Arrays.fill(this.taint, taint);
+    return this;
   }
 
-  private SLString append(String post, Object[] postTaint) {
-    Object[] taint = new Object[this.taint.length + postTaint.length];
-    // propagate taint to new instance
-    System.arraycopy(this.taint, 0, taint, 0, this.taint.length);
-    System.arraycopy(postTaint, 0, taint, this.taint.length, postTaint.length);
+  // message exports for InteropLibraray
 
-    String value = this.value + post;
-    return new SLString(value, taint);
+  @ExportMessage
+  static boolean isString(SLString receiver) {
+    return true;
   }
 
   @Override
@@ -156,27 +167,5 @@ public final class SLString implements TruffleObject {
   public boolean equals(Object obj) {
     if (!(obj instanceof SLString)) { return false; }
     return value.equals(((SLString) obj).value);
-  }
-
-  // message exports to convert SLStrings to Strings
-  
-  @ExportMessage
-  boolean hasMetaObject() {
-      return true;
-  }
-
-  @ExportMessage
-  Object getMetaObject() {
-      return SLType.STRING;
-  }
-
-  @ExportMessage
-  boolean isString() {
-    return true;
-  }
-
-  @ExportMessage
-  String asString() {
-    return value;
   }
 }

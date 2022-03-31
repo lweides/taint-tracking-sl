@@ -1,5 +1,5 @@
 function main() {
-  t = taint("hello", "world");
+  t = addTaint("hello", "world");
   o1 = getTaint(t, 0);
   println(o1);
   t1 = "hello";

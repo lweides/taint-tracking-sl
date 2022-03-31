@@ -138,6 +138,8 @@ public final class SLLanguageView implements TruffleObject {
                         return Boolean.toString(interop.asBoolean(delegate));
                     } else if (type == SLType.STRING) {
                         return interop.asString(delegate);
+                    } else if (type == SLType.ARRAY) {
+                        return interop.toDisplayString(delegate);
                     } else {
                         /* We use the type name as fallback for any other type */
                         return type.getName();

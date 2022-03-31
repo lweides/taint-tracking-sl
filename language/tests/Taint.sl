@@ -1,9 +1,9 @@
 function main() {
-  t1 = taint("hello", "world");
+  t1 = addTaint("hello", "world");
   println(isTainted(t1));
-  println(getTaint(t1, 0));
+  println(getTaint(t1));
 
-  t2 = taint("number", 73);
+  t2 = addTaint("number", 73);
   println(isTainted(t2));
-  println(getTaint(t2, 0));
+  println(getTaint(t2));
 }

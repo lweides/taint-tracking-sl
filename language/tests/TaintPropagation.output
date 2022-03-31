@@ -1,8 +1,16 @@
 true
+[1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2]
 true
+[DEFAULT_TAINT, DEFAULT_TAINT, DEFAULT_TAINT, DEFAULT_TAINT, DEFAULT_TAINT, NULL, NULL, NULL, NULL, NULL, NULL]
 true
+[NULL, NULL, NULL, NULL, NULL, DEFAULT_TAINT, DEFAULT_TAINT, DEFAULT_TAINT, DEFAULT_TAINT, DEFAULT_TAINT, DEFAULT_TAINT]
 true
+[DEFAULT_TAINT, DEFAULT_TAINT, DEFAULT_TAINT, DEFAULT_TAINT, DEFAULT_TAINT, NULL, NULL]
 true
+[NULL, NULL, DEFAULT_TAINT, DEFAULT_TAINT, DEFAULT_TAINT, DEFAULT_TAINT, DEFAULT_TAINT, DEFAULT_TAINT]
 false
+[null, null, null, null, null, null, null]
 false
+[null, null, null, null, null, null, null, null]
 false
+[null, null, null, null, null, null, null, null, null, null, null]

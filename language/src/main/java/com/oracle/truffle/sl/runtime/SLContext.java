@@ -88,10 +88,10 @@ import com.oracle.truffle.sl.builtins.SLRegisterShutdownHookBuiltinFactory;
 import com.oracle.truffle.sl.builtins.SLStackTraceBuiltinFactory;
 import com.oracle.truffle.sl.builtins.SLTypeOfBuiltinFactory;
 import com.oracle.truffle.sl.builtins.SLWrapPrimitiveBuiltinFactory;
+import com.oracle.truffle.sl.builtins.taint.SLAddTaintBuiltinFactory;
 import com.oracle.truffle.sl.builtins.taint.SLGetTaintBuiltinFactory;
 import com.oracle.truffle.sl.builtins.taint.SLIsTaintedBuiltinFactory;
 import com.oracle.truffle.sl.builtins.taint.SLRemoveTaintBuiltinFactory;
-import com.oracle.truffle.sl.builtins.taint.SLTaintBuiltinFactory;
 
 import org.graalvm.polyglot.Context;
 
@@ -194,7 +194,7 @@ public final class SLContext {
         installBuiltin(SLAddToHostClassPathBuiltinFactory.getInstance());
 
         // taint tracking related builtins
-        installBuiltin(SLTaintBuiltinFactory.getInstance());
+        installBuiltin(SLAddTaintBuiltinFactory.getInstance());
         installBuiltin(SLIsTaintedBuiltinFactory.getInstance());
         installBuiltin(SLGetTaintBuiltinFactory.getInstance());
         installBuiltin(SLRemoveTaintBuiltinFactory.getInstance());

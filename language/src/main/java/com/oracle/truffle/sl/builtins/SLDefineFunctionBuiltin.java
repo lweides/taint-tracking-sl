@@ -41,14 +41,13 @@
 package com.oracle.truffle.sl.builtins;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.sl.SLLanguage;
-import com.oracle.truffle.sl.nodes.util.SLFromSLStringNode;
 import com.oracle.truffle.sl.runtime.SLContext;
-import com.oracle.truffle.sl.runtime.SLString;
+import com.oracle.truffle.sl.runtime.SLStringLibrary;
 
 /**
  * Builtin function to define (or redefine) functions. The provided source code is parsed the same
@@ -58,13 +57,11 @@ import com.oracle.truffle.sl.runtime.SLString;
 public abstract class SLDefineFunctionBuiltin extends SLBuiltinNode {
 
     @TruffleBoundary
-    @Specialization(guards = "isString(code)")
-    public String defineFunction(
-        Object code,
-        @Cached SLFromSLStringNode node
-        ) {
+    @Specialization(guards = "codeLib.isStringLike(code)")
+    public String defineFunction(Object code,
+                    @CachedLibrary(limit = "3") SLStringLibrary codeLib) {
         // @formatter:off
-        String codeString = node.execute(code);
+        String codeString = codeLib.asString(code);
         Source source = Source.newBuilder(SLLanguage.ID, codeString, "[defineFunction]").
             build();
         // @formatter:on
@@ -72,9 +69,5 @@ public abstract class SLDefineFunctionBuiltin extends SLBuiltinNode {
         SLContext.get(this).getFunctionRegistry().register(source);
 
         return codeString;
-    }
-
-    protected boolean isString(Object value) {
-        return value instanceof String || value instanceof SLString;
     }
 }

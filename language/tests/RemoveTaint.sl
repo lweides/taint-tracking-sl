@@ -1,6 +1,7 @@
 function main() {
-  t = taint("hello world");
-  removeTaint(t, 0, 3);
+  t = addTaint("hello world");
+  println(removeTaint(t, 0, 3));
+  println(getTaint(t));
   println(isTainted(t));
   removeTaint(t, 3, 11);
   println(isTainted(t));
