@@ -48,7 +48,6 @@ import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.sl.nodes.util.SLFromSLStringNode;
 import com.oracle.truffle.sl.runtime.SLContext;
 import com.oracle.truffle.sl.runtime.SLString;
 import com.oracle.truffle.sl.runtime.SLStringLibrary;
