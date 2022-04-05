@@ -73,8 +73,19 @@ public final class SLString implements TruffleObject {
    * @param value to be taint tracked
    */
   public SLString(String value) {
-    this(value, new Object[value.length()]);
-    Arrays.fill(this.taint, SLNull.SINGLETON);
+    this.value = value;
+    this.taint = taintAll(value.length(), SLNull.SINGLETON);
+  }
+
+  public SLString(String value, Object taint) {
+    this.value = value;
+    this.taint = taintAll(value.length(), taint);
+  }
+
+  private static Object[] taintAll(int stringLength, Object taintLabel) {
+    final Object[] characterTaint = new Object[stringLength];
+    Arrays.fill(characterTaint, taintLabel);
+    return characterTaint;
   }
 
   /**
@@ -133,8 +144,7 @@ public final class SLString implements TruffleObject {
   @ExportMessage
   @TruffleBoundary
   SLString addTaint(Object taint) {
-    Arrays.fill(this.taint, taint);
-    return this;
+    return new SLString(value, taintAll(value.length(), taint));
   }
 
   // message exports for InteropLibraray

@@ -163,9 +163,7 @@ public abstract class SLStringLibrary extends Library {
 
     @ExportMessage
     static SLString addTaint(String receiver, Object taint) {
-      SLString tainted = new SLString(receiver);
-      tainted.addTaint(taint);
-      return tainted;
+      return new SLString(receiver, taint);
     }
   }
 }

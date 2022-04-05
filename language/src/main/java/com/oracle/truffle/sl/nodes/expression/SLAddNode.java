@@ -134,7 +134,12 @@ public abstract class SLAddNode extends SLBinaryNode {
     protected String addUnTainted(Object left, Object right,
                         @CachedLibrary(limit = "3") SLStringLibrary leftLib,
                         @CachedLibrary(limit = "3") SLStringLibrary rightLib) {
-        return leftLib.asString(left) + rightLib.asString(right);
+        return concatenate(leftLib.asString(left), rightLib.asString(right));
+    }
+
+    @TruffleBoundary
+    private static String concatenate(String lhs, String rhs) {
+        return lhs + rhs;
     }
 
     @Fallback
