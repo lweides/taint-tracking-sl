@@ -1,7 +1,6 @@
 package com.oracle.truffle.sl.runtime;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.library.GenerateLibrary;
@@ -33,15 +32,6 @@ public abstract class SLStringLibrary extends Library {
   public abstract boolean isStringLike(Object receiver);
 
   /**
-   * Returns whether the {@code receiver} can potentially be tainted. 
-   * Returing {@code true} implies to also return {@code true} when {@link SLStringLibrary#isStringLike(Object)}
-   * is called.
-   * @param receiver to be tested
-   * @return whether the {@code receiver} can be tainted
-   */
-  public abstract boolean canBeTainted(Object receiver);
-
-  /**
    * Checks if the {@code receiver} is tainted.
    * Has to return {@code false} if {@link SLStringLibrary#canBeTainted(Object)} returns {@code false}.
    * @param receiver to be tested
@@ -61,30 +51,6 @@ public abstract class SLStringLibrary extends Library {
    */
   public abstract Object[] getTaint(Object receiver);
 
- /**
-  * Removes the taint of the {@code receiver}.
-  * This method may return {@code null} if the {@code receiver} is not tainted.
-  * This method may return an array of size {@code from - to}, filled with
-  * {@link SLNull#SINGLETON} if the {@code receiver} is not tainted.
-  * @param receiver some possibly tainted stringlike entity
-  * @param from first taint marker to be removed
-  * @param to first taint marker to be not removed
-  * @return the removed taint
-  * @throws UnsupportedMessageException if the {@code receiver} cannot be tainted
-  * @see SLStringLibrary#canBeTainted(Object)
-  */
-  public abstract Object[] removeTaint(Object receiver, SLBigNumber to, SLBigNumber from) throws UnsupportedMessageException;
-
-  /**
-   * Adds taint the the {@link receiver}.
-   * @param receiver stringlike entity to be tainted
-   * @param taint taint marker to be used
-   * @return the tainted {@link SLString}
-   * @throws UnsupportedMessageException if the {@code receiver} cannot be tainted
-   * @see SLStringLibrary#canBeTainted(Object)
-   */
-  public abstract SLString addTaint(Object receiver, Object taint) throws UnsupportedMessageException;
-
   @ExportLibrary(value = SLStringLibrary.class, receiverType = Object.class)
   @SuppressWarnings("static-method")
   static class DefaultObjectExports {
@@ -101,11 +67,6 @@ public abstract class SLStringLibrary extends Library {
     }
 
     @ExportMessage
-    static boolean canBeTainted(Object receiver) {
-      return false;
-    }
-
-    @ExportMessage
     static boolean isTainted(Object receiver) {
       return false;
     }
@@ -113,16 +74,6 @@ public abstract class SLStringLibrary extends Library {
     @ExportMessage
     static Object[] getTaint(Object receiver) {
       return null;
-    }
-    
-    @ExportMessage
-    static Object[] removeTaint(Object receiver, SLBigNumber from, SLBigNumber to) throws UnsupportedMessageException {
-      throw UnsupportedMessageException.create();
-    }
-
-    @ExportMessage
-    static SLString addTaint(Object receiver, Object taint) throws UnsupportedMessageException {
-      throw UnsupportedMessageException.create();
     }
   }
 
@@ -142,11 +93,6 @@ public abstract class SLStringLibrary extends Library {
     }
 
     @ExportMessage
-    static boolean canBeTainted(String receiver) {
-      return true;
-    }
-
-    @ExportMessage
     static boolean isTainted(String receiver) {
       return false;
     }
@@ -154,18 +100,6 @@ public abstract class SLStringLibrary extends Library {
     @ExportMessage
     static Object[] getTaint(String receiver) {
       return null;
-    }
-    
-    @ExportMessage
-    static Object[] removeTaint(String receiver, SLBigNumber from, SLBigNumber to) {
-      return null;
-    }
-
-    @ExportMessage
-    static SLString addTaint(String receiver, Object taint) {
-      SLString tainted = new SLString(receiver);
-      tainted.addTaint(taint);
-      return tainted;
     }
   }
 }

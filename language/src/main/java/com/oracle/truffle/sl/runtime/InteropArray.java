@@ -3,6 +3,7 @@ package com.oracle.truffle.sl.runtime;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
@@ -42,6 +43,7 @@ public class InteropArray implements TruffleObject {
     return Long.compareUnsigned(index, values.length) < 0;
   }
 
+  @TruffleBoundary
   @ExportMessage
   String toDisplayString(boolean allowSideEffects) {
     return Arrays.toString(values);

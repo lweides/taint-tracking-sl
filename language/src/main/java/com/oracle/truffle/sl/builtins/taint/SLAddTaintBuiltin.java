@@ -1,14 +1,12 @@
 package com.oracle.truffle.sl.builtins.taint;
 
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import static com.oracle.truffle.api.CompilerDirectives.shouldNotReachHere;
 import com.oracle.truffle.sl.builtins.SLBuiltinNode;
 import com.oracle.truffle.sl.runtime.SLNull;
 import com.oracle.truffle.sl.runtime.SLString;
-import com.oracle.truffle.sl.runtime.SLStringLibrary;
+
+import java.util.Arrays;
 
 @NodeInfo(shortName = "addTaint")
 public abstract class SLAddTaintBuiltin extends SLBuiltinNode {
@@ -28,13 +26,15 @@ public abstract class SLAddTaintBuiltin extends SLBuiltinNode {
    * @param taint taint marker
    * @return the tainted {@link SLString}
    */
-  @Specialization(guards = "valueLib.canBeTainted(value)")
-  public SLString addTaint(Object value, Object taint,
-                    @CachedLibrary(limit = "3") SLStringLibrary valueLib) {
-    try {
-      return valueLib.addTaint(value, taint == SLNull.SINGLETON ? TAINT : taint);
-    } catch (UnsupportedMessageException e) {
-     throw shouldNotReachHere();
-    }
+  @Specialization
+  public SLString addTaint(String value, Object taint) {
+    Object[] taintArr = new Object[value.length()];
+    Arrays.fill(taintArr, taint == SLNull.SINGLETON ? TAINT : taint);
+    return new SLString(value, taintArr);
+  }
+
+  @Specialization
+  public SLString addTaint(SLString value, Object taint) {
+    return value.addTaint(taint == SLNull.SINGLETON ? TAINT : taint);
   }
 }

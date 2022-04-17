@@ -83,9 +83,27 @@ public final class SLString implements TruffleObject {
    * @param value to be taint tracked
    * @param taint the taint
    */
-  private SLString(String value, Object[] taint) {
+  public SLString(String value, Object[] taint) {
     this.value = value;
     this.taint = taint;
+  }
+
+  @TruffleBoundary
+  public SLString removeTaint(SLBigNumber from, SLBigNumber to,
+            @CachedLibrary(limit = "3") InteropLibrary fromLib,
+            @CachedLibrary(limit = "3") InteropLibrary toLib) throws UnsupportedMessageException {
+    int f = fromLib.asInt(from);
+    int t = toLib.asInt(to);
+    Object[] taintArr = Arrays.copyOf(taint, taint.length);
+    Arrays.fill(taintArr, f, t, SLNull.SINGLETON);
+    return new SLString(value, taintArr);
+  }
+
+  @TruffleBoundary
+  public SLString addTaint(Object taint) {
+    Object[] taintArr = new Object[this.value.length()];
+    Arrays.fill(taintArr, taint);
+    return new SLString(this.value, taintArr);
   }
 
   // message exports for SLStringLibrary
@@ -101,12 +119,7 @@ public final class SLString implements TruffleObject {
   }
 
   @ExportMessage
-  static boolean canBeTainted(SLString receiver) {
-    return true;
-  }
-
-  @ExportMessage
-  boolean isTainted() {
+  public boolean isTainted() {
     for (Object taint : this.taint) {
       if (!SLTypes.isSLNull(taint)) { return true; }
     }
@@ -114,27 +127,8 @@ public final class SLString implements TruffleObject {
   }
 
   @ExportMessage
-  Object[] getTaint() {
+  public Object[] getTaint() {
     return taint;
-  }
-  
-  @ExportMessage
-  @TruffleBoundary
-  Object[] removeTaint(SLBigNumber from, SLBigNumber to,
-            @CachedLibrary(limit = "3") InteropLibrary fromLib,
-            @CachedLibrary(limit = "3") InteropLibrary toLib) throws UnsupportedMessageException {
-    int f = fromLib.asInt(from);
-    int t = toLib.asInt(to);
-    Object[] prevTaint = Arrays.copyOfRange(taint, f, t);
-    Arrays.fill(taint, f, t, SLNull.SINGLETON);
-    return prevTaint;
-  }
-
-  @ExportMessage
-  @TruffleBoundary
-  SLString addTaint(Object taint) {
-    Arrays.fill(this.taint, taint);
-    return this;
   }
 
   // message exports for InteropLibraray

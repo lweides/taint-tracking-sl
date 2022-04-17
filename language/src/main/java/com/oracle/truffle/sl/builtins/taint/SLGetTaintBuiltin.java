@@ -1,11 +1,13 @@
 package com.oracle.truffle.sl.builtins.taint;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.sl.builtins.SLBuiltinNode;
 import com.oracle.truffle.sl.runtime.InteropArray;
-import com.oracle.truffle.sl.runtime.SLStringLibrary;
+import com.oracle.truffle.sl.runtime.SLNull;
+import com.oracle.truffle.sl.runtime.SLString;
 
 @NodeInfo(shortName = "getTaint")
 public abstract class SLGetTaintBuiltin extends SLBuiltinNode {
@@ -15,11 +17,15 @@ public abstract class SLGetTaintBuiltin extends SLBuiltinNode {
    * @param value possibly tainted {@link String}
    * @return the taint marker
    */
-  @Specialization(guards = "valueLib.canBeTainted(value)")
-  public InteropArray getTaint(Object value,
-                        @CachedLibrary(limit = "3") SLStringLibrary valueLib) {
-    Object[] taint = valueLib.getTaint(value);
-    if (taint == null) { return new InteropArray(new Object[valueLib.asString(value).length()]); }
-    return new InteropArray(taint);
+  @Specialization
+  public InteropArray getTaint(String value) {
+    Object[] taintArr = new Object[value.length()];
+    Arrays.fill(taintArr, SLNull.SINGLETON);
+    return new InteropArray(taintArr);
+  }
+
+  @Specialization
+  public InteropArray getTaint(SLString value) {
+    return new InteropArray(value.getTaint());
   }
 }

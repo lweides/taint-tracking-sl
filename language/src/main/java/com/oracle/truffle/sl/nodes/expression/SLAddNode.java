@@ -126,6 +126,7 @@ public abstract class SLAddNode extends SLBinaryNode {
      * It is important that {@link SLString}s are not concatenated this way, as this would drop their taint 
      * information.
      */
+    @TruffleBoundary
     @Specialization(guards = { 
         "leftLib.isStringLike(left) || rightLib.isStringLike(right)", 
         "!leftLib.isTainted(left)", 
