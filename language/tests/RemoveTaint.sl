@@ -1,8 +1,10 @@
 function main() {
   t = addTaint("hello world");
-  println(removeTaint(t, 0, 3));
+  println(isTainted(t));
+  tRemoved = removeTaint(t, 0, 3);
+  println(getTaint(tRemoved));
   println(getTaint(t));
-  println(isTainted(t));
-  removeTaint(t, 3, 11);
-  println(isTainted(t));
+  tRemoved = removeTaint(tRemoved, 3, 11);
+  println(getTaint(tRemoved));
+  println(isTainted(tRemoved));
 }
