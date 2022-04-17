@@ -15,4 +15,5 @@ graalvm/
 component/sl-component.jar
 language/dependency-reduced-pom.xml
 native/slnative
+native/slnative.build_artifacts.txt
 graalvm-ce-java11-22.0.0.2
