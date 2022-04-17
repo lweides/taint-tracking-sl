@@ -6,8 +6,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.sl.nodes.SLTypes;
@@ -88,18 +86,12 @@ public final class SLString implements TruffleObject {
     this.taint = taint;
   }
 
-  @TruffleBoundary
-  public SLString removeTaint(SLBigNumber from, SLBigNumber to,
-            @CachedLibrary(limit = "3") InteropLibrary fromLib,
-            @CachedLibrary(limit = "3") InteropLibrary toLib) throws UnsupportedMessageException {
-    int f = fromLib.asInt(from);
-    int t = toLib.asInt(to);
+  public SLString removeTaint(int from, int to) {
     Object[] taintArr = Arrays.copyOf(taint, taint.length);
-    Arrays.fill(taintArr, f, t, SLNull.SINGLETON);
+    Arrays.fill(taintArr, from, to, SLNull.SINGLETON);
     return new SLString(value, taintArr);
   }
 
-  @TruffleBoundary
   public SLString addTaint(Object taint) {
     Object[] taintArr = new Object[this.value.length()];
     Arrays.fill(taintArr, taint);

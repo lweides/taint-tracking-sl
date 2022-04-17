@@ -25,7 +25,7 @@ public abstract class SLRemoveTaintBuiltin extends SLBuiltinNode {
                   @CachedLibrary(limit = "3") InteropLibrary fromLib,
                   @CachedLibrary(limit = "3") InteropLibrary toLib) {
     try {
-      return value.removeTaint(from, to, fromLib, toLib);
+      return value.removeTaint(fromLib.asInt(from), toLib.asInt(to));
     } catch (UnsupportedMessageException e) {
       throw shouldNotReachHere(e);
     }
