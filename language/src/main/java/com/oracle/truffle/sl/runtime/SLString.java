@@ -93,15 +93,19 @@ public final class SLString implements TruffleObject {
   }
 
   public SLString addTaint(Object taint) {
-    Object[] taintArr = new Object[this.value.length()];
+    return addTaint(this.value, taint);
+  }
+
+  public static SLString addTaint(String value, Object taint) {
+    Object[] taintArr = new Object[value.length()];
     Arrays.fill(taintArr, taint);
-    return new SLString(this.value, taintArr);
+    return new SLString(value, taintArr);
   }
 
   // message exports for SLStringLibrary
 
   @ExportMessage()
-  String asString() {
+  public String asString() {
     return value;
   }
 

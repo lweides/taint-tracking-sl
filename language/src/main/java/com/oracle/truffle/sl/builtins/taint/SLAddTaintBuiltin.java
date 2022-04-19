@@ -1,12 +1,11 @@
 package com.oracle.truffle.sl.builtins.taint;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.InteropLibrary;
+import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.sl.builtins.SLBuiltinNode;
-import com.oracle.truffle.sl.runtime.SLNull;
 import com.oracle.truffle.sl.runtime.SLString;
-
-import java.util.Arrays;
 
 @NodeInfo(shortName = "addTaint")
 public abstract class SLAddTaintBuiltin extends SLBuiltinNode {
@@ -27,14 +26,14 @@ public abstract class SLAddTaintBuiltin extends SLBuiltinNode {
    * @return the tainted {@link SLString}
    */
   @Specialization
-  public SLString addTaint(String value, Object taint) {
-    Object[] taintArr = new Object[value.length()];
-    Arrays.fill(taintArr, taint == SLNull.SINGLETON ? TAINT : taint);
-    return new SLString(value, taintArr);
+  public SLString addTaint(String value, Object taint,
+                           @CachedLibrary(limit = "3") InteropLibrary interop) {
+    return SLString.addTaint(value, interop.isNull(taint) ? TAINT : taint);
   }
 
   @Specialization
-  public SLString addTaint(SLString value, Object taint) {
-    return value.addTaint(taint == SLNull.SINGLETON ? TAINT : taint);
+  public SLString addTaint(SLString value, Object taint,
+                           @CachedLibrary(limit = "3") InteropLibrary interop) {
+    return SLString.addTaint(value.asString(), interop.isNull(taint) ? TAINT : taint);
   }
 }
