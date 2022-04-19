@@ -21,12 +21,23 @@ public abstract class SLRemoveTaintBuiltin extends SLBuiltinNode {
    * @param to first taint marker not to remove
    */
   @Specialization
+  public SLString removeTaintWithoutIndexConversion(SLString value, int from, int to) {
+    return value.removeTaint(from, to);
+  }
+
+  /**
+   * Removes all taint markers within the given range.
+   * @param value possibly tainted {@link String}
+   * @param from first taint marker to remove
+   * @param to first taint marker not to remove
+   */
+  @Specialization(replaces = "removeTaintWithoutIndexConversion")
   public SLString removeTaint(SLString value, Object from, Object to,
                   @CachedLibrary(limit = "3") InteropLibrary fromLib,
                   @CachedLibrary(limit = "3") InteropLibrary toLib) {
     final int fromIndex = parseIntOrThrow(from, fromLib, "From index is not a number");
     final int toIndex = parseIntOrThrow(to, toLib, "To index is not a number");
-    return value.removeTaint(fromIndex, toIndex);
+    return removeTaintWithoutIndexConversion(value, fromIndex, toIndex);
   }
 
   private int parseIntOrThrow(Object index, InteropLibrary interop, String errorMessage) {
