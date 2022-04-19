@@ -1,11 +1,12 @@
 package com.oracle.truffle.sl.builtins.taint;
 
-import static com.oracle.truffle.api.CompilerDirectives.shouldNotReachHere;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.library.CachedLibrary;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.sl.SLException;
 import com.oracle.truffle.sl.builtins.SLBuiltinNode;
 import com.oracle.truffle.sl.runtime.SLBigNumber;
 import com.oracle.truffle.sl.runtime.SLString;
@@ -18,16 +19,27 @@ public abstract class SLRemoveTaintBuiltin extends SLBuiltinNode {
    * @param value possibly tainted {@link String}
    * @param from first taint marker to remove
    * @param to first taint marker not to remove
-   * @throws UnsupportedMessageException
    */
   @Specialization
-  public SLString removeTaint(SLString value, SLBigNumber from, SLBigNumber to,
+  public SLString removeTaint(SLString value, Object from, Object to,
                   @CachedLibrary(limit = "3") InteropLibrary fromLib,
                   @CachedLibrary(limit = "3") InteropLibrary toLib) {
-    try {
-      return value.removeTaint(fromLib.asInt(from), toLib.asInt(to));
-    } catch (UnsupportedMessageException e) {
-      throw shouldNotReachHere(e);
+    final int fromIndex = parseIntOrThrow(from, fromLib, "From index is not a number");
+    final int toIndex = parseIntOrThrow(to, toLib, "To index is not a number");
+    return value.removeTaint(fromIndex, toIndex);
+  }
+
+  private int parseIntOrThrow(Object index, InteropLibrary interop, String errorMessage) {
+    if (interop.isNumber(index) && interop.fitsInInt(interop)) {
+      try {
+        return interop.asInt(index);
+      } catch (UnsupportedMessageException e) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        throw CompilerDirectives.shouldNotReachHere("Interop contract violation: value claims to be an int but is not");
+      }
+    } else {
+      CompilerDirectives.transferToInterpreterAndInvalidate();
+      throw new SLException(errorMessage, this);
     }
   }
 
