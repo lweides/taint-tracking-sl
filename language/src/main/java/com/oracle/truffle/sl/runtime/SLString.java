@@ -2,13 +2,17 @@ package com.oracle.truffle.sl.runtime;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.library.ExportLibrary;
 import com.oracle.truffle.api.library.ExportMessage;
+import com.oracle.truffle.sl.SLException;
+import com.oracle.truffle.sl.nodes.SLExpressionNode;
 import com.oracle.truffle.sl.nodes.SLTypes;
+import com.oracle.truffle.sl.nodes.local.SLScopedNode;
 
 /**
  * This class is used to propagate taint in {@link String}s in Simple Language.
@@ -157,5 +161,26 @@ public final class SLString implements TruffleObject {
   public boolean equals(Object obj) {
     if (!(obj instanceof SLString)) { return false; }
     return value.equals(((SLString) obj).value);
+  }
+
+  public void checkRangeOrThrow(int from, int to, SLScopedNode node) {
+    checkRangeOrThrow(value, from, to, node);
+  }
+
+  public static void checkRangeOrThrow(String value, int from, int to, SLScopedNode node) {
+    if (Integer.compareUnsigned(from, value.length()) >= 0) {
+      CompilerDirectives.transferToInterpreterAndInvalidate();
+      throw throwRangeError(value, "Start index out of range", from, to, node);
+    } else if (Integer.compareUnsigned(from, to) > 0) {
+      CompilerDirectives.transferToInterpreterAndInvalidate();
+      throw throwRangeError(value, "Invalid end index", from, to, node);
+    } else if (Integer.compareUnsigned(to, value.length()) > 0) {
+      CompilerDirectives.transferToInterpreterAndInvalidate();
+      throw throwRangeError(value, "End index out of range", from, to, node);
+    }
+  }
+
+  private static SLException throwRangeError(String value, String message, int from, int to, SLScopedNode node) {
+    throw new SLException(String.format("%s: [%d, %d), string length is %d", message, from, to, value.length()), node);
   }
 }

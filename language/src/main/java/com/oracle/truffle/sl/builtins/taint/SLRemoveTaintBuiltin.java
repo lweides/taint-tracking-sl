@@ -22,6 +22,7 @@ public abstract class SLRemoveTaintBuiltin extends SLBuiltinNode {
    */
   @Specialization
   public SLString removeTaintWithoutIndexConversion(SLString value, int from, int to) {
+    value.checkRangeOrThrow(from, to, this);
     return value.removeTaint(from, to);
   }
 
